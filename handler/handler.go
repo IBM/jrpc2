@@ -138,6 +138,13 @@ func newHandler(fn interface{}) (Func, error) {
 		return nil, errors.New("nil method")
 	}
 
+	if f, ok := fn.(func(context.Context, *jrpc2.Request) (interface{}, error)); ok {
+		f_converted := func(ctx context.Context, req *jrpc2.Request) (interface{}, func(), error) {
+			i, err := f(ctx, req)
+			return i, nil, err
+		}
+		return Func(f_converted), nil
+	}
 	// Special case: If fn has the exact signature of the Handle method, don't do
 	// any (additional) reflection at all.
 	if f, ok := fn.(func(context.Context, *jrpc2.Request) (interface{}, func(), error)); ok {
